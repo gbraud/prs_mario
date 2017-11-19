@@ -36,9 +36,9 @@ void map_new (unsigned width, unsigned height)
   map_object_add ("images/herb.png", 1, MAP_OBJECT_AIR);
   // Petit plancher flottant
   map_object_add ("images/floor.png", 1, MAP_OBJECT_SEMI_SOLID);
-
+  //fleur
   map_object_add ("images/flower.png",1,MAP_OBJECT_AIR);
-
+  //pièce
   map_object_add ("images/coin.png",20,MAP_OBJECT_AIR | MAP_OBJECT_COLLECTIBLE);
 
   map_object_end ();
@@ -68,10 +68,6 @@ void map_save (char *filename)
 
 
   for(int i=0; i<nb; i++){
-    int frame=map_get_frames(i);
-    if(write(save,&frame,sizeof(int))!= sizeof(int)){
-      exit_with_error("erreur écriture frame");
-    }
 
     char * nom = map_get_name(i);
     int taille = strlen(nom);
@@ -81,6 +77,11 @@ void map_save (char *filename)
     }
     if(write(save,nom,sizeof(char)*taille)!= sizeof(char)*taille){
       exit_with_error("erreur écriture nom");
+    }
+    
+    int frame=map_get_frames(i);
+    if(write(save,&frame,sizeof(int))!= sizeof(int)){
+      exit_with_error("erreur écriture frame");
     }
 
     int prop=map_get_solidity(i)
@@ -132,17 +133,13 @@ void map_load (char *filename)
   map_object_begin(nb);
 
   for(int i=0;i<nb;i++){
-    int frame;
-    if(read(fd,&frame,sizeof(int))==-1){
-      exit_with_error("erreur lecture frame");
-    }
+    
     int taille;
     if(read(fd,&taille,sizeof(int))==-1){
       exit_with_error("erreur lecture taille nom");
     }
 
     char c;
-    //char nom[taille];
 
     char* nom = calloc(sizeof(char), (taille+1));
 
@@ -152,7 +149,11 @@ void map_load (char *filename)
       }
       nom[j]=c;
     }
-
+    
+		int frame;
+    if(read(fd,&frame,sizeof(int))==-1){
+      exit_with_error("erreur lecture frame");
+    }
     int prop;
     if(read(fd,&prop,sizeof(int))==-1){
       exit_with_error("erreur lecture propriétés");

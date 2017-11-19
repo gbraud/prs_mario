@@ -4,9 +4,9 @@ width : largeur, int
 height : hauteur, int
 nb : nombre de textures, int
 différents champs pour chaque texture :
-  -frame : nombre de frame, int
   -taille : taille du nom, int
   -nom : adresse à laquelle on va chercher la texture, char *
+  -frame : nombre de frame, int
   -prop : toutes les propriétées de l'objet (solidité, destructibilité...)
 
 contenu : contenu de chaque case, écrit ligne par ligne du haut vers le bas
