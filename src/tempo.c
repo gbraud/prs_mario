@@ -27,42 +27,32 @@ static unsigned long get_time (void)
 void c(int s){
   printf("Id thread courant : %lu\n",pthread_self());
 }
+
+
 void *routine(void *p){
-  sigset_t m;
-  sigemptyset(&m);
-  sigaddset(&m,SIGALRM);
-  pthread_sigmask(SIG_UNBLOCK,&m,NULL);
-
-  struct sigaction s;
-  s.sa_handler = c;
-  sigemptyset(&s.sa_mask);
-  s.sa_flags=0;
-  sigaction(SIGALRM,&s,NULL);
-
+  sigset_t m= *(sigset_t*)p;
+  sigdelset(&m,SIGALRM);
+  pthread_sigmask(SIG_SETMASK,&m,NULL);
   while(1){
     sigsuspend(&m);
-
-    //printf("Id thread courant : %d\n",pthread_self())
   }
+
 }
 
 // timer_init returns 1 if timers are fully implemented, 0 otherwise
 int timer_init (void)
 {
   pthread_t tid;
-
   sigset_t m;
-  sigemptyset(&m);
-  sigaddset(&m,SIGALRM);
-  pthread_sigmask(SIG_BLOCK,&m,NULL);
-
+  sigfillset(&m);
+  //printf("%d\n",sig );
+  pthread_sigmask(SIG_SETMASK,&m,NULL);
   struct sigaction s;
   s.sa_handler = c;
   sigemptyset(&s.sa_mask);
   s.sa_flags=0;
   sigaction(SIGALRM,&s,NULL);
-  pthread_create(&tid,NULL,routine,NULL);
-
+  pthread_create(&tid,NULL,routine,&m);
   return 1; // Implementation not ready
 }
 
