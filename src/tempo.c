@@ -18,18 +18,52 @@ static unsigned long get_time (void)
 
   // Only count seconds since beginning of 2016 (not jan 1st, 1970)
   tv.tv_sec -= 3600UL * 24 * 365 * 46;
-  
+
   return tv.tv_sec * 1000000UL + tv.tv_usec;
 }
 
 #ifdef PADAWAN
 
+void c(int s){
+  printf("Id thread courant : %lu\n",pthread_self());
+}
+void *routine(void *p){
+  sigset_t m;
+  sigemptyset(&m);
+  sigaddset(&m,SIGALRM);
+  pthread_sigmask(SIG_UNBLOCK,&m,NULL);
+
+  struct sigaction s;
+  s.sa_handler = c;
+  sigemptyset(&s.sa_mask);
+  s.sa_flags=0;
+  sigaction(SIGALRM,&s,NULL);
+
+  while(1){
+    sigsuspend(&m);
+
+    //printf("Id thread courant : %d\n",pthread_self())
+  }
+}
+
 // timer_init returns 1 if timers are fully implemented, 0 otherwise
 int timer_init (void)
 {
-  // TODO
+  pthread_t tid;
 
-  return 0; // Implementation not ready
+  sigset_t m;
+  sigemptyset(&m);
+  sigaddset(&m,SIGALRM);
+  pthread_sigmask(SIG_BLOCK,&m,NULL);
+
+  struct sigaction s;
+  s.sa_handler = c;
+  sigemptyset(&s.sa_mask);
+  s.sa_flags=0;
+  sigaction(SIGALRM,&s,NULL);
+  pthread_create(&tid,NULL,routine,NULL);
+
+  return 1; // Implementation not ready
 }
 
 timer_id_t timer_set (Uint32 delay, void *param)
