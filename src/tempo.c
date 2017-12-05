@@ -40,9 +40,12 @@ Liste *encours=NULL;
 void c(int s){
   sdl_push_event(parameter);
   printf ("sdl_push_event(%p) appelée au temps %ld\n", parameter, get_time ());
-  encours=encours->suivant;
   if(encours!=NULL){
-    timer_set(encours->delai_restant,encours->param);
+    encours=encours->suivant;
+    if(encours != NULL){
+      //parameter=encours->param;
+      timer_set(encours->delai_restant,encours->param);
+    }
   }
 }
 
@@ -75,51 +78,76 @@ int timer_init (void)
 
 timer_id_t timer_set (Uint32 delay, void *param)
 {
-  parameter=param;
+  //parameter=param;
   unsigned long current_time=get_time();
 
   Liste *delais = malloc(sizeof(Liste));
   if(delais==NULL){
     exit_with_error("erreur creation delais");
   }
-  delais->depart=current_time;
-  delais->delai_restant = delay;
-  delais->param=parameter;
-  delais->suivant=NULL;
+  else{
+    delais->depart=current_time;
+    delais->delai_restant = delay;
+    delais->param=param;
+    delais->suivant=NULL;
+  }
 
+//FONCTIONNE BIEN
   if(encours==NULL){
     encours=delais;
+    parameter=encours->param;
     struct itimerval timer;
     timer.it_interval.tv_sec=0;
     timer.it_interval.tv_usec=0;
-    timer.it_value.tv_sec=delais->delai_restant/1000;
-    timer.it_value.tv_usec=((delais->delai_restant)%1000)*1000;
+    timer.it_value.tv_sec=encours->delai_restant/1000;
+    timer.it_value.tv_usec=((encours->delai_restant)%1000)*1000;
     setitimer(ITIMER_REAL,&timer,NULL);
   }
 
+//Le cas où un timer est déjà en cours.
   else{
     Liste *tmp=encours;
     unsigned long d;
-    d=(tmp->depart+tmp->delai_restant)-current_time;
-    if(d<delais->delai_restant){
-      delais->delai_restant-=d;
+    printf("delai_restant : %d\n",tmp->delai_restant);
+    printf("tmp->depart : %lu\n",tmp->depart);
+    printf("current_time : %lu\n",current_time);
+    printf("diff : %lu\n", current_time -tmp->depart);
+    if(tmp->depart+(tmp->delai_restant*1000)<current_time){
+      exit_with_error("MERDE\n");
+    }
+    else{
+      d=(tmp->depart+(tmp->delai_restant*1000))-current_time; //usec
+    }
+    printf("d : %lu\n",d);
+//Le cas où le prochain processus doit finir après le processus en cours
+    if(d<(delais->delai_restant*1000)){ //usec
+      delais->delai_restant-=d/1000;
       while(tmp->suivant!=NULL && delais->delai_restant>tmp->suivant->delai_restant){
         tmp=tmp->suivant;
         delais->delai_restant-=tmp->delai_restant;
       }
-      tmp->suivant->delai_restant-=delais->delai_restant;
-      delais->suivant=tmp->suivant;
-      tmp->suivant=delais;
-      encours=tmp;
-      struct itimerval timer;
-      timer.it_interval.tv_sec=0;
-      timer.it_interval.tv_usec=0;
-      timer.it_value.tv_sec=encours->delai_restant/1000;
-      timer.it_value.tv_usec=((encours->delai_restant)%1000)*1000;
-      setitimer(ITIMER_REAL,&timer,NULL);
+      if(tmp->suivant !=NULL){
+        tmp->suivant->delai_restant-=delais->delai_restant;
+        delais->suivant=tmp->suivant;
+        tmp->suivant=delais;
+        encours=tmp;
+
+        struct itimerval timer;
+        timer.it_interval.tv_sec=0;
+        timer.it_interval.tv_usec=0;
+        timer.it_value.tv_sec=encours->delai_restant/1000;
+        timer.it_value.tv_usec=((encours->delai_restant)%1000)*1000;
+        setitimer(ITIMER_REAL,&timer,NULL);
+      }
     }
+//Le cas où le prochain processus doit finir avant celui en cours
     else{
-      tmp->delai_restant-=delais->delai_restant;
+      printf("delai_restant : %d\n",tmp->delai_restant);
+      printf("delais->delai_restant : %d\n", delais->delai_restant);
+      printf("tmp->depart : %lu\n",tmp->depart);
+      printf("current_time : %lu\n",current_time);
+      tmp->delai_restant -= delais->delai_restant + ((current_time - tmp->depart)/1000);//((current_time - tmp->depart)+(delais->delai_restant*1000))/1000; //ms
+      printf("delai_restant : %d\n",tmp->delai_restant);
       delais->suivant=tmp;
       encours=delais;
       struct itimerval timer;
@@ -131,7 +159,7 @@ timer_id_t timer_set (Uint32 delay, void *param)
     }
 
   }
-
+  //free(delais);
   return (timer_id_t) NULL;
 }
 
