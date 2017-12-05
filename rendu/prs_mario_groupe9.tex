@@ -1,0 +1,181 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage[utf8x]{inputenc}
+\usepackage[francais]{babel}
+\usepackage{dirtree}
+\usepackage{listings}
+
+\date{\today}
+
+
+
+\begin{document}
+
+
+\title{Rapport de projet : Groupe 9 }
+\author{Gaëlle BRAUD - Arthur LONGUEFOSSE - Gabriel LORRAIN \\
+   Université de Bordeaux \\
+   L3 Informatique \\
+   \texttt{gaelle.braud@etu.u-bordeaux.fr } \\
+   \texttt{arthur.longuefosse@etu.u-bordeaux.fr} \\
+   \texttt{gabriel.lorrain@etu.u-bordeaux.fr }}
+   
+\maketitle
+\tableofcontents
+
+\newpage
+\section{Rendu intermédiaire n°1 \texttt{(17 novembre)}} 
+	\subsection{Objectifs à atteindre}
+	L'objectif du premier rendu était de se familiariser avec le jeu (commandes de base, édition de la carte..), puis d'include deux nouveaux objets (\textit{flower} et \textit{coin}) et leurs propriétés. \\ 
+	Ensuite nous devions implémenter la sauvegarde et le chargement des cartes, en développant les fonctions \texttt{map$\_$save} et \texttt{map$\_$load}.\\
+	
+	Fichier à rendre :
+	
+	\dirtree{%
+	.1 mapio.c.
+	.2 map$\_$save.
+	.2 map$\_$load.
+	}
+	
+	\subsection{Travail réalisé et résultats obtenus}
+	
+	Pour include les deux nouveaux objets, nous avons ajouter 2 au nombre d'objets total (précédemment 6) : \texttt{map$\_$objet$\_$begin(8)}, puis nous avons appeler un \texttt{map$\_$object$\_$add} pour chaque objet, en spécifiant en paramètre l'image \texttt{.png}, le nombre de sprites et les propriétés. \\
+Les deux objets peuvent désormais être sélectionné et affiché dans le jeu. \\
+
+Pour implémenter la sauvegarde d'une carte, nous avons compléter la fonction \texttt{map$\_$save}.
+Pour ce faire, nous ouvrons un fichier vide \texttt{save} avec la fonction \texttt{open} puis nous stockons chaque caractéristiques de la carte dans des variables grâce aux fonctions fournies :
+\begin{itemize}
+	\item Largeur : \texttt{int width = map$\_$width()};
+	\item Hauteur : \texttt{int height = map$\_$height()};
+	\item etc...
+\end{itemize}
+Ensuite nous stockons de la même manière les caractéristiques des objets (en les parcourant un par un), et le contenu de chaque case en parcourant la hauteur et la largeur de la carte. \\
+A chaque définition de variable, un appel à la fonction \texttt{write} est effectué, pour placer dans le fichier \texttt{save} les caractéristiques de la carte et des objets. Cet appel est placé dans une condition pour pouvoir gérer les erreurs :
+\lstinputlisting[language=C,firstline=54, lastline=57]{mapio.c} 
+
+Pour implémenter le chargement d'une carte, nous avons compléter la fonction \texttt{map$\_$load}. Pour ce faire, nous ouvrons le fichier contenant la sauvegarde avec \texttt{open}, puis nous stockons les caractéristiques contenues dans le fichier dans des variables grâce à la fonction \texttt{read}. Chaque appel est également placé dans une condition pour pouvoir gérer les erreurs :
+\lstinputlisting[language=C,firstline=120, lastline=123]{mapio.c}
+Ensuite, nous utilisons les fonctions fournies pour créer la carte : \\
+\texttt{map$\_$allocate(width,height)} et \texttt{map$\_$object$\_$begin(nb$\_$objets)}\\
+De la même manière que le \texttt{map$\_$save}, nous stockons les caractéristiques des objets dans des variables en les parcourant un par un, et à chaque fin de boucle on appelle \texttt{map$\_$object$\_$add(nom, frame, prop)}. \\
+Une fois tous les objets ajoutés, on termine par \texttt{map$\_$object$\_$end()}. \\
+Enfin, le contenu de chaque case est stocké en parcourant la hauteur (\texttt{i de 0 à height}) et la largeur (\texttt{i de 0 à width}) de la carte, et à chaque case on appelle \texttt{map$\_$set(j,i,contenu)}. \\
+
+La sauvegarde et le chargement sont désormais fonctionnels :
+\begin{itemize}
+	\item Pour sauvegarder une map, on appuie simplement sur la touche \textbf{s} dans le jeu, ce qui va créer ou écraser le fichier save.map contenu dans le dossier /maps.
+
+	\item Pour charger une carte, il suffit d'appeler le fichier de sauvegarde du dossier /maps : \texttt{./game -l maps/saved.map}
+\end{itemize}
+
+
+	\subsection{Difficultés rencontrées}%
+	
+	\begin{itemize}
+	\item SAVE : Propriété get solidity en binaire \\
+	\end{itemize}
+	
+	La principale difficulté rencontrée pour le \texttt{map$\_$load} était de récupérer le nom des objets (pour afficher l'image) ; nous avions pensé à utiliser un \texttt{malloc} pour initialiser le tableau contenant les caractères du nom, mais le tableau de caractère ne se remplissait pas correctement. La solution était d'utiliser un \texttt{calloc} pour bien initialiser les éléments du tableau à 0. 
+	
+\newpage
+\section{Rendu intermédiaire n°2 \texttt{(30 novembre)}}
+	\subsection{Objectifs à atteindre}
+	
+	L'objectif du deuxième rendu était de développer des utilitaires de manipulation de carte via le programme \texttt{maputil}. \\
+	Celui-ci doit permettre :
+	\begin{itemize}
+		\item l'affichage des informations du fichier (\texttt{getinfo});
+		\item la modification de la taille de la carte (\texttt{setwidth, setheight});
+		\item le remplacement des objets d'une carte (\texttt{setobjects});
+		\item la suppression des objets inutilisés (\texttt{pruneobjects}). \\
+	\end{itemize}
+
+	Fichiers à rendre :
+	
+	\dirtree{%
+	.1 util.
+	.2 maputil.c.
+	}
+	\subsection{Travail réalisé et résultats obtenus}
+	
+	La fonction \texttt{getInfo} correspond simplement à l'appel de trois fonctions :
+	\begin{itemize}
+		\item \texttt{getWidth} (largeur);
+		\item \texttt{getHeight} (hauteur);
+		\item \texttt{getObjects} (nombre d'objets).
+	\end{itemize}
+	Ces trois fonctions sont simplement un \texttt{read} d'un \texttt{int} sur le fichier de sauvegarde. Le choix de la valeur(\texttt{int}) à lire se fait grâce à \texttt{lseek}, qui va permettre de déplacer la tête de lecture sur le fichier de sauvegarde : 
+	
+\begin{center} 
+
+	$
+	\begin{array}{|c|c|}
+ 	\hline \textbf{int} & \textbf{déplacement à effectuer} \\ 
+ 	\hline \texttt{width} & 0 \\ 
+ 	\hline \texttt{height} & \texttt{lseek(fd,sizeof(int),SEEK\_SET)} \\ 
+ 	\hline \texttt{nb\_objects} & \texttt{lseek(fd,2*sizeof(int),SEEK\_SET)} \\ 
+ 	\hline \end{array}
+ 	$ 
+
+\end{center}
+
+Pour réaliser le reste des fonctions de \texttt{maputil}, nous avons fait le choix de ré-écrire entièrement une nouvelle carte (\texttt{new.map}) avec les attributs à changer (\texttt{width, height}, objets à remplacer ou suppression des objets inutilisés) et de remplacer l'ancienne carte par la nouvelle, définie de la manière suivante : 
+
+	 Pour \texttt{setWidth} et \texttt{setHeight}, on récupère chaque caractéristique de la	carte avec un \texttt{read}, et on les place dans la nouvelle carte avec un \texttt{write} avec le nouvel attribut (\texttt{width} ou \texttt{height}). La boucle implémentant le contenu de chaque cases va également s'adapter avec le nouvel attribut, en supprimant le contenu des cases si il diminue, ou en ajoutant des cases vides si il augmente. \\
+	
+	 Pour \texttt{setObject}, ce sont les objets qui vont désormais être modifiés. On récupère donc les caractéristiques (inchangées) de la carte dans la nouvelle carte, puis à partir des arguments on récupère les propriétés des objets. Pour cela, nous avons implémenter une boucle \texttt{for} qui va s'incrémenter de 6 à chaque fin de boucle, pour permettre de récupérer les 6 caractéristiques de chaque objet dans la boucle. (\texttt{nom, frame, solidity, is$\_$destructible, is$\_$collectible ,is$\_$generator}). \\
+	
+	 Enfin, pour \texttt{pruneObject}, on récupère les caractéristiques (inchangées) de la carte dans la nouvelle carte, puis on supprime les objets non présents sur la carte. Pour cela, on initialise un tableau \texttt{occ[nb$\_$objet]}, puis on parcourt toutes les cases de la carte : dès qu'objet est trouvé, on incrémente la case du tableau correspondant à l'objet. Les objets non présents sur la carte (\texttt{i.e. occ[ob] = 0}) ne seront pas défini sur la nouvelle carte, grâce à un \texttt{lseek} sur leurs propriétés.\\
+
+L'utilitaire de manipulation de carte \texttt{maputil} est désormais fonctionnel, depuis le dossier \texttt{util} :
+\begin{itemize}
+	\item Obtenir des informations sur la carte sauvegardée : \\
+		 \texttt{./maputil ../maps/saved.map --getwidth} \\
+		 \texttt{./maputil ../maps/saved.map --getheight} \\
+		 \texttt{./maputil ../maps/saved.map --getobjects} \\
+		 \texttt{./maputil ../maps/saved.map --getinfo} \\
+		
+	\item Changer la taille de la carte : \\
+		 \texttt{./maputil ../maps/saved.map --setwidth <w>} \\
+		 \texttt{./maputil ../maps/saved.map --setheight <h>} \\
+	
+	\item Remplacer des objets de la carte : \\
+		\texttt{xargs ./util/maputil maps/saved.map --setobjects < util/objects.txt} \\
+	
+	\item Supprimer les objets qui n'apparaissent pas sur la carte : \\
+		\texttt{./maputil ../maps/saved.map --pruneobjects}
+\end{itemize}
+
+	
+	\subsection{Difficultés rencontrées}
+		
+La principale difficulté rencontrée pour réaliser \texttt{maputil} était de savoir quelle méthode utiliser pour modifier les propriétés de la carte et des objets. Nous avons opté pour une redéfinition entière d'une nouvelle carte, car nous pouvons modifier toutes les propriétés à la création. Il nous suffisait ensuite de remplacer l'ancienne carte par la nouvelle. 
+	
+\newpage
+\section{Rendu final \texttt{(10 décembre)}}
+	\subsection{Objectifs à atteindre}
+	L'objectif du rendu final était d'implémenter un gestionnaire de temporisateurs, qui permettra au jeu de planifier des événements. \\
+	Pour cela, nous devions compléter les fonctions :
+\begin{itemize}
+	 \item \texttt{timer$\_$init}, qui permet l'initialisation des variables et la mise en place des traitants de signaux;
+	 \item \texttt{timer$\_$set}, qui permet \textit{d'armer} un temporisateur, grâce au paramètre \texttt{delay} qui spécifie la durée avant qu'un événement ne se déclenche; \\
+	 \item \textbf{Bonus} : \texttt{timer$\_$cancel}, qui permet d'annuler un temporisateur précédemment armé avec \texttt{timer$\_$set}. \\
+\end{itemize}
+
+	Fichiers à rendre :
+	
+	\dirtree{%
+	.1 tempo.c.
+	.2 map$\_$save.
+	.2 map$\_$load.
+	.1 rapport PDF.
+	}
+	
+
+	\subsection{Travail réalisé et résultats obtenus}
+	
+	
+	
+	\subsection{Difficultés rencontrées}
+
+
+\end{document}
