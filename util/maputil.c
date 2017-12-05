@@ -50,7 +50,7 @@ void getObjects(int fd){
   }
 }
 
-void setWidth(int fd,int newwidth){
+void setWidth(int fd,int newwidth,char* path){
   int new=open("new.map",O_WRONLY | O_CREAT | O_TRUNC,0640);
   if(new==-1)
     exit_with_error("erreur ouverture\n");
@@ -118,12 +118,12 @@ void setWidth(int fd,int newwidth){
       }
     }
   }
-  remove("../maps/saved.map");
-  rename("new.map", "../maps/saved.map");
+  remove(path);
+  rename("new.map", path);
   close(new);
   }
 
-void setHeight(int fd, int newheight){
+void setHeight(int fd, int newheight,char* path){
   int new=open("new.map",O_WRONLY | O_CREAT | O_TRUNC,0640);
   if(new==-1)
     exit_with_error("erreur ouverture\n");
@@ -194,12 +194,13 @@ void setHeight(int fd, int newheight){
   		}
   	}
   }
-  remove("../maps/saved.map");
-  rename("new.map", "../maps/saved.map");
+  remove(path);
+  rename("new.map", path);
   close(new);
 }
 
 void setObjects(int fd,int nbarg,char** argv){
+  char* path=argv[1];
   int new=open("new.map",O_WRONLY | O_CREAT | O_TRUNC,0640);
   if(new==-1)
     exit_with_error("erreur ouverture\n");
@@ -310,12 +311,12 @@ void setObjects(int fd,int nbarg,char** argv){
     if(write(new,&buf,sizeof(int))!=sizeof(int))
        exit_with_error("erreur écriture contenu de la map\n");
   }
-  remove("../maps/saved.map");
-  rename("new.map", "../maps/saved.map");
+  remove(path);
+  rename("new.map", path);
   close(new);
 }
 
-void pruneObjects(int fd){
+void pruneObjects(int fd, char* path){
   int new=open("new.map",O_WRONLY | O_CREAT | O_TRUNC,0640);
   if(new==-1)
     exit_with_error("erreur ouverture\n");
@@ -393,8 +394,8 @@ void pruneObjects(int fd){
     if(write(new,&buf,sizeof(int))!=sizeof(int))
       exit_with_error("erreur écriture new\n");
   }
-  remove("../maps/saved.map");
-  rename("new.map", "../maps/saved.map");
+  remove(path);
+  rename("new.map", path);
   close(new);
 }
 
@@ -422,16 +423,16 @@ int main(int argc, char * argv[]){
   }
 
   else if(strcmp(argv[2],"--setwidth")==0)
-    setWidth(fd,atoi(argv[3]));
+    setWidth(fd,atoi(argv[3]),argv[1]);
 
   else if(strcmp(argv[2],"--setheight")==0)
-    setHeight(fd,atoi(argv[3]));
+    setHeight(fd,atoi(argv[3]),argv[1]);
 
   else if(strcmp(argv[2],"--setobjects")==0)
     setObjects(fd,argc,argv);
 
   else if(strcmp(argv[2],"--pruneobjects")==0)
-    pruneObjects(fd);
+    pruneObjects(fd,argv[1]);
 
   close(fd);
   return 0;
