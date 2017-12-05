@@ -1,0 +1,302 @@
+PTHREAD_CREATE(3)         Manuel du programmeur Linux        PTHREAD_CREATE(3)
+
+NNOOMM
+       pthread_create - Créer un nouveau thread
+
+SSYYNNOOPPSSIISS
+       ##iinncclluuddee <<pptthhrreeaadd..hh>>
+
+       iinntt pptthhrreeaadd__ccrreeaattee((pptthhrreeaadd__tt **_t_h_r_e_a_d,, ccoonnsstt pptthhrreeaadd__aattttrr__tt **_a_t_t_r,,
+                          vvooiidd **((**_s_t_a_r_t___r_o_u_t_i_n_e)) ((vvooiidd **)),, vvooiidd **_a_r_g));;
+
+       Compilez et effectuez l'édition des liens avec l'option _-_p_t_h_r_e_a_d.
+
+DDEESSCCRRIIPPTTIIOONN
+       La fonction pptthhrreeaadd__ccrreeaattee()  démarre un nouveau thread dans le proces‐
+       sus appelant. Le nouveau thread commence par appeler  _s_t_a_r_t___r_o_u_t_i_n_e() ;
+       _a_r_g est passé comme unique argument de _s_t_a_r_t___r_o_u_t_i_n_e().
+
+       Le nouveau thread se termine d'une des manières suivantes :
+
+       * Il  appelle  pptthhrreeaadd__eexxiitt(3),  en  indiquant une valeur de sortie qui
+         sera disponible pour pour un  autre  thread  du  même  processus  qui
+         appelle pptthhrreeaadd__jjooiinn(3).
+
+       * Il  sort  de  la  routine _s_t_a_r_t___r_o_u_t_i_n_e(). C'est équivalent à appeler
+         pptthhrreeaadd__eexxiitt(3)  avec la valeur fournie à l'instruction _r_e_t_u_r_n.
+
+       * Il est annulé (voir  pptthhrreeaadd__ccaanncceell(3)).
+
+       * Un des threads du processus appelle eexxiitt(3), ou le  thread  principal
+         sort  de la routine _m_a_i_n(). Cela entraine l'arrêt de tous les threads
+         du processus.
+
+       L'argument _a_t_t_r pointe sur une structure _p_t_h_r_e_a_d___a_t_t_r___t dont le contenu
+       est  utilisé pendant la création des threads pour déterminer les attri‐
+       buts  du  nouveau  thread.  Cette  structure   est   initialisée   avec
+       pptthhrreeaadd__aattttrr__iinniitt(3)  et  les  fonctions  similaires. Si _a_t_t_r est NULL,
+       alors le thread est créé avec les attributs par défaut.
+
+       Avant de revenir, un appel réussi à pptthhrreeaadd__ccrreeaattee()  stocke  l'identi‐
+       fiant  du  nouveau thread dans le tampon pointé par _t_h_r_e_a_d. Cet identi‐
+       fiant est utilisé pour se référer à ce thread  dans  les  appels  ulté‐
+       rieurs aux autres fonctions de pthreads.
+
+       Le  nouveau  thread  hérite  d'une  copie du masque de signal du thread
+       créateur (pptthhrreeaadd__ssiiggmmaasskk(3)). L'ensemble des signaux en  attente  pour
+       le  nouveau thread est vide (ssiiggppeennddiinngg(2)). Le nouveau thread n'hérite
+       pas de la pile spécifique de signaux (ssiiggaallttssttaacckk(2)) du  thread  appe‐
+       lant.
+
+       Le  nouveau  thread  hérite  de  l'environnement  en  virgule flottante
+       (ffeennvv(3)) du thread appelant.
+
+       La valeur initiale de l'horloge CPU  du  nouveau  thread  est  0  (voir
+       pptthhrreeaadd__ggeettccppuucclloocckkiidd(3)).
+
+   DDééttaaiillss ssppéécciiffiiqquueess àà LLiinnuuxx
+       Le  nouveau  thread  hérite de copies des ensembles des capacités (voir
+       ccaappaabbiilliittiieess(7))  et des masques d'affinité CPU (consultez sscchheedd__sseettaaff‐‐
+       ffiinniittyy(2)).
+
+VVAALLEEUURR RREENNVVOOYYÉÉEE
+       En  cas de réussite, pptthhrreeaadd__ccrreeaattee() renvoie 0 ; en cas d'erreur, elle
+       renvoie un numéro d'erreur, et le contenu de _*_t_h_r_e_a_d est indéfini.
+
+EERRRREEUURRSS
+       EEAAGGAAIINN Ressources insuffisantes pour créer un nouveau  thread,  ou  une
+              limite  sur  le  nombre  de threads imposée par le système a été
+              atteinte. Ce dernier cas peut arriver de deux façons : la limite
+              souple  RRLLIIMMIITT__NNPPRROOCC  (changée  par sseettrrlliimmiitt(2)), qui limite le
+              nombre de processus pour un identifiant  d'utilisateur  réel,  a
+              été  atteinte ;  ou  alors la limite imposée par le noyau sur le
+              nombre total de  threads,  _/_p_r_o_c_/_s_y_s_/_k_e_r_n_e_l_/_t_h_r_e_a_d_s_-_m_a_x,  a  été
+              atteinte.
+
+       EEIINNVVAALL Paramètres invalides dans _a_t_t_r.
+
+       EEPPEERRMM  Permissions  insuffisantes pour définir la politique d'ordonnan‐
+              cement et les paramètres spécifiés dans _a_t_t_r.
+
+CCOONNFFOORRMMIITTÉÉ
+       POSIX.1-2001.
+
+NNOOTTEESS
+       Consultez pptthhrreeaadd__sseellff(3)  pour des informations  plus  détaillées  sur
+       l'identifiant de thread renvoyé dans _*_t_h_r_e_a_d par pptthhrreeaadd__ccrreeaattee(). Sauf
+       si une politique d'ordonnancement temps-réel  est  employée,  après  un
+       appel à pptthhrreeaadd__ccrreeaattee(), on ne sait pas quel thread — l'appelant ou le
+       nouveau thread — sera exécuté ensuite.
+
+       Un thread peut être dans un état soit joignable (_j_o_i_n_a_b_l_e), soit  déta‐
+       ché  (_d_e_t_a_c_h_e_d). Si un thread est joignable, un autre thread peut appe‐
+       ler pptthhrreeaadd__jjooiinn(3)  pour attendre que ce thread se termine, et récupé‐
+       rer  sa  valeur de sortie. Ce n'est que quand un thread terminé et joi‐
+       gnable a été joint que ses ressources sont rendues au système. Quand un
+       thread  détaché se termine, ses ressources sont automatiquement rendues
+       au système ; il n'est pas possible de joindre un tel thread  afin  d'en
+       obtenir  la  valeur de sortie. Mettre un thread dans l'état détaché est
+       pratique pour certains types de démons qui ne se préoccupent pas de  la
+       valeur de sortie de ses threads. Par défaut, un nouveau thread est créé
+       dans  l'état  joignable,  à  moins  qu'_a_t_t_r  n'ait  été  modifié  (avec
+       pptthhrreeaadd__aattttrr__sseettddeettaacchhssttaattee(3)) pour créer le thread dans un état déta‐
+       ché.
+
+       Sous Linux/x86-32, la taille de la pile  par  défaut  pour  un  nouveau
+       thread  est  de  2 mégaoctets. Avec l'implémentation NPTL, si la limite
+       souple RRLLIIMMIITT__SSTTAACCKK a une valeur autre qu'« unlimited » _a_u _m_o_m_e_n_t _o_ù _l_e
+       _p_r_o_g_r_a_m_m_e  _a  _d_é_m_a_r_r_é,  alors  elle  détermine la taille de la pile par
+       défaut pour les nouveaux threads. Afin d'obtenir  une  taille  de  pile
+       différente  de la valeur par défaut, il faut appeler pptthhrreeaadd__aattttrr__sseettss‐‐
+       ttaacckkssiizzee(3) avec la valeur souhaitée sur l'argument _a_t_t_r  utilisé  pour
+       créer un thread.
+
+BBOOGGUUEESS
+       Dans l'implémentation obsolète LinuxThreads, chacun des threads dans un
+       processus a un identifiant de processus différent. Ceci est  en  viola‐
+       tion des spécifications POSIX sur les threads, et est la cause de beau‐
+       coup de non conformité au standard. Consultez pptthhrreeaaddss(7).
+
+EEXXEEMMPPLLEE
+       Le programme ci-dessous montre l'utilisation de pptthhrreeaadd__ccrreeaattee(), ainsi
+       qu'un certain nombre d'autres fonctions de l'API pthreads.
+
+       Lors  de  l'exécution  suivante,  sur  un système avec l'implémentation
+       NPTL, la taille de la pile vaut par défaut la valeur  renvoyée  par  la
+       limite de la ressource « stack size » (taille de la pile) :
+
+           $ uulliimmiitt --ss
+           8192            # The stack size limit is 8 MB (0x800000 bytes)
+           $ ..//aa..oouutt hhoollaa ssaalluutt sseerrvvuuss
+           Thread 1: top of stack near 0xb7dd03b8; argv_string=hola
+           Thread 2: top of stack near 0xb75cf3b8; argv_string=salut
+           Thread 3: top of stack near 0xb6dce3b8; argv_string=servus
+           Joined with thread 1; returned value was HOLA
+           Joined with thread 2; returned value was SALUT
+           Joined with thread 3; returned value was SERVUS
+
+       Lors  de  l'exécution  suivante, le programme définit explicitement une
+       taille de pile de 1 Mo (avec  pptthhrreeaadd__aattttrr__sseettssttaacckkssiizzee(3))   pour  les
+       threads créés :
+
+           $ ..//aa..oouutt --ss 00xx110000000000 hhoollaa ssaalluutt sseerrvvuuss
+           Thread 1: top of stack near 0xb7d723b8; argv_string=hola
+           Thread 2: top of stack near 0xb7c713b8; argv_string=salut
+           Thread 3: top of stack near 0xb7b703b8; argv_string=servus
+           Joined with thread 1; returned value was HOLA
+           Joined with thread 2; returned value was SALUT
+           Joined with thread 3; returned value was SERVUS
+
+   SSoouurrccee dduu pprrooggrraammmmee
+
+       #include <pthread.h>
+       #include <string.h>
+       #include <stdio.h>
+       #include <stdlib.h>
+       #include <unistd.h>
+       #include <errno.h>
+       #include <ctype.h>
+
+       #define handle_error_en(en, msg) \
+               do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
+
+       #define handle_error(msg) \
+               do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+       struct thread_info {    /* Used as argument to thread_start() */
+           pthread_t thread_id;        /* ID returned by pthread_create() */
+           int       thread_num;       /* Application-defined thread # */
+           char     *argv_string;      /* From command-line argument */
+       };
+
+       /* Thread start function: display address near top of our stack,
+          and return upper-cased copy of argv_string */
+
+       static void *
+       thread_start(void *arg)
+       {
+           struct thread_info *tinfo = arg;
+           char *uargv, *p;
+
+           printf("Thread %d: top of stack near %p; argv_string=%s\n",
+                   tinfo->thread_num, &p, tinfo->argv_string);
+
+           uargv = strdup(tinfo->argv_string);
+           if (uargv == NULL)
+               handle_error("strdup");
+
+           for (p = uargv; *p != '\0'; p++)
+               *p = toupper(*p);
+
+           return uargv;
+       }
+
+       int
+       main(int argc, char *argv[])
+       {
+           int s, tnum, opt, num_threads;
+           struct thread_info *tinfo;
+           pthread_attr_t attr;
+           int stack_size;
+           void *res;
+
+           /* The "-s" option specifies a stack size for our threads */
+
+           stack_size = -1;
+           while ((opt = getopt(argc, argv, "s:")) != -1) {
+               switch (opt) {
+               case 's':
+                   stack_size = strtoul(optarg, NULL, 0);
+                   break;
+
+               default:
+                   fprintf(stderr, "Usage: %s [-s stack-size] arg...\n",
+                           argv[0]);
+                   exit(EXIT_FAILURE);
+               }
+           }
+
+           num_threads = argc - optind;
+
+           /* Initialize thread creation attributes */
+
+           s = pthread_attr_init(&attr);
+           if (s != 0)
+               handle_error_en(s, "pthread_attr_init");
+
+           if (stack_size > 0) {
+               s = pthread_attr_setstacksize(&attr, stack_size);
+               if (s != 0)
+                   handle_error_en(s, "pthread_attr_setstacksize");
+           }
+
+           /* Allocate memory for pthread_create() arguments */
+
+           tinfo = calloc(num_threads, sizeof(struct thread_info));
+           if (tinfo == NULL)
+               handle_error("calloc");
+
+           /* Create one thread for each command-line argument */
+
+           for (tnum = 0; tnum < num_threads; tnum++) {
+               tinfo[tnum].thread_num = tnum + 1;
+               tinfo[tnum].argv_string = argv[optind + tnum];
+
+               /* The pthread_create() call stores the thread ID into
+                  corresponding element of tinfo[] */
+
+               s = pthread_create(&tinfo[tnum].thread_id, &attr,
+                                  &thread_start, &tinfo[tnum]);
+               if (s != 0)
+                   handle_error_en(s, "pthread_create");
+           }
+
+           /* Destroy the thread attributes object, since it is no
+              longer needed */
+
+           s = pthread_attr_destroy(&attr);
+           if (s != 0)
+               handle_error_en(s, "pthread_attr_destroy");
+
+           /* Now join with each thread, and display its returned value */
+
+           for (tnum = 0; tnum < num_threads; tnum++) {
+               s = pthread_join(tinfo[tnum].thread_id, &res);
+               if (s != 0)
+                   handle_error_en(s, "pthread_join");
+
+               printf("Joined with thread %d; returned value was %s\n",
+                       tinfo[tnum].thread_num, (char *) res);
+               free(res);      /* Free memory allocated by thread */
+           }
+
+           free(tinfo);
+           exit(EXIT_SUCCESS);
+       }
+
+VVOOIIRR AAUUSSSSII
+       ggeettrrlliimmiitt(2), pptthhrreeaadd__aattttrr__iinniitt(3), pptthhrreeaadd__ccaanncceell(3),
+       pptthhrreeaadd__ddeettaacchh(3), pptthhrreeaadd__eeqquuaall(3), pptthhrreeaadd__eexxiitt(3),
+       pptthhrreeaadd__ggeettaattttrr__nnpp(3), pptthhrreeaadd__jjooiinn(3), pptthhrreeaadd__sseellff(3), pptthhrreeaaddss(7)
+
+CCOOLLOOPPHHOONN
+       Cette page fait partie de la publication 3.65 du projet _m_a_n_-_p_a_g_e_s
+       Linux. Une description du projet et des instructions pour signaler des
+       anomalies peuvent être trouvées à l'adresse
+       http://www.kernel.org/doc/man-pages/.
+
+TTRRAADDUUCCTTIIOONN
+       Depuis 2010, cette traduction est maintenue à l'aide de l'outil po4a
+       <http://po4a.alioth.debian.org/> par l'équipe de traduction francophone
+       au sein du projet perkamon <http://perkamon.alioth.debian.org/>.
+
+       Denis Barbier (2010).
+
+       Veuillez signaler toute erreur de traduction en écrivant à
+       <debian-l10n-french@lists.debian.org> ou par un rapport de bogue sur le
+       paquet mmaannppaaggeess--ffrr.
+
+       Vous pouvez toujours avoir accès à la version anglaise de ce document
+       en utilisant la commande « mmaann --LL CC _<_s_e_c_t_i_o_n_> _<_p_a_g_e___d_e___m_a_n_> ».
+
+Linux                             3 août 2012                PTHREAD_CREATE(3)
