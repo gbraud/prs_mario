@@ -44,7 +44,14 @@ void c(int s){
     encours=encours->suivant;
     if(encours != NULL){
       //parameter=encours->param;
-      timer_set(encours->delai_restant,encours->param);
+      if(encours->delai_restant < 1000){
+        sdl_push_event(encours->param);
+        encours=encours->suivant;
+      }
+      printf("encours : %d\n",encours );
+      if(encours != NULL)
+        timer_set(encours->delai_restant,encours->param);
+      printf("TEST4\n");
     }
   }
 }
@@ -108,17 +115,18 @@ timer_id_t timer_set (Uint32 delay, void *param)
   else{
     Liste *tmp=encours;
     unsigned long d;
-    printf("delai_restant : %d\n",tmp->delai_restant);
-    printf("tmp->depart : %lu\n",tmp->depart);
-    printf("current_time : %lu\n",current_time);
-    printf("diff : %lu\n", current_time -tmp->depart);
-    if(tmp->depart+(tmp->delai_restant*1000)<current_time){
+    /*if(tmp->depart+(tmp->delai_restant*1000)<current_time){
       exit_with_error("MERDE\n");
     }
-    else{
+    else{*/
       d=(tmp->depart+(tmp->delai_restant*1000))-current_time; //usec
-    }
+      printf("tmp->depart : %lu\n",tmp->depart);
+      printf("tmp->delai_restant : %d\n",tmp->delai_restant*1000);
+      printf("current_time : %lu\n",current_time);
+    //}
     printf("d : %lu\n",d);
+
+
 //Le cas où le prochain processus doit finir après le processus en cours
     if(d<(delais->delai_restant*1000)){ //usec
       delais->delai_restant-=d/1000;
@@ -142,14 +150,16 @@ timer_id_t timer_set (Uint32 delay, void *param)
     }
 //Le cas où le prochain processus doit finir avant celui en cours
     else{
-      printf("delai_restant : %d\n",tmp->delai_restant);
-      printf("delais->delai_restant : %d\n", delais->delai_restant);
-      printf("tmp->depart : %lu\n",tmp->depart);
-      printf("current_time : %lu\n",current_time);
-      tmp->delai_restant -= delais->delai_restant + ((current_time - tmp->depart)/1000);//((current_time - tmp->depart)+(delais->delai_restant*1000))/1000; //ms
-      printf("delai_restant : %d\n",tmp->delai_restant);
+      d = current_time - tmp->depart;
+      tmp->delai_restant -= d/1000;
+      tmp->delai_restant -= delais->delai_restant; 
+
+      
       delais->suivant=tmp;
+      delais->suivant->delai_restant = tmp->delai_restant;
       encours=delais;
+
+
       struct itimerval timer;
       timer.it_interval.tv_sec=0;
       timer.it_interval.tv_usec=0;
