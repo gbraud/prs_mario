@@ -93,7 +93,7 @@ void map_save (char *filename)
       exit_with_error("erreur écriture propriétés");
     }
 
-  }
+    }
 
   for(int i=0;i<height;i++){
     for(int j=0;j<width;j++){

@@ -24,10 +24,30 @@ void getHeight(int fd){
 
 void getObjects(int fd){
   int nb;
+  int taille;
+  char c;
   lseek(fd,2*sizeof(int),SEEK_SET);
   if(read(fd,&nb,sizeof(int))==-1)
     exit_with_error("erreur lecture nombre d'objets\n");
   printf("nombre d'objets : %d \n", nb);
+  for(int i=0;i<nb;i++){
+    if(read(fd,&taille,sizeof(int))==-1)
+      exit_with_error("erreur lecture taille\n");
+    printf("taille nom : %d\n",taille);
+    for(int j=0;j<taille;j++){
+      if(read(fd,&c,sizeof(char))==-1)
+        exit_with_error("erreur lecture taille\n");
+      printf("%c",c );
+    }
+    printf("\n");
+    if(read(fd,&taille,sizeof(int))==-1)
+      exit_with_error("erreur lecture taille\n");
+    printf("frame : %d\n",taille);
+    if(read(fd,&taille,sizeof(int))==-1)
+      exit_with_error("erreur lecture prop\n");
+    printf("prop : %d\n",taille);
+    printf("\n");
+  }
 }
 
 void setWidth(int fd,int newwidth){
@@ -212,10 +232,10 @@ void setObjects(int fd,int nbarg,char** argv){
     if(write(new,&frame,sizeof(int))!= sizeof(int))
       exit_with_error("erreur écriture frame");
 
-    int solidity;
-    int destructible;
-    int collectible;
-    int generator;
+    int solidity=0;
+    int destructible=0;
+    int collectible=0;
+    int generator=0;
 
 
     if(strcmp(argv[i+2],"air")==0){
@@ -249,10 +269,9 @@ void setObjects(int fd,int nbarg,char** argv){
 
 
     if(strcmp(argv[i+4],"collectible")==0){
-      collectible = MAP_OBJECT_COLLECTIBLE;
+      collectible = 1;
     }
     else if(strcmp(argv[i+4],"not-collectible")==0){
-      collectible = 0;
     }
     else{
       exit_with_error("erreur lecture collect de l'objet");
@@ -261,7 +280,7 @@ void setObjects(int fd,int nbarg,char** argv){
 
 
     if(strcmp(argv[i+5],"generator")==0){
-      generator = MAP_OBJECT_GENERATOR;
+      generator = 1;
     }
     else if(strcmp(argv[i+5],"not-generator")==0){
       generator = 0;
@@ -276,6 +295,10 @@ void setObjects(int fd,int nbarg,char** argv){
                 |collectible<<7
                 |generator<<8;
 
+    printf("1 %d\n",solidity );
+    printf("2 %d\n",destructible );
+    printf("3 %d\n",collectible);
+    printf("4 %d\n",generator);
     if(write(new,&prop,sizeof(int))!= sizeof(int))
       exit_with_error("erreur écriture propriétés");
   }
