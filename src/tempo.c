@@ -10,7 +10,25 @@
 #include "timer.h"
 #include "error.h"
 
-void *parameter;
+/*Component of the chained waiting list of timer.
+  - Time when timer_set is called
+  - 
+  - The function which be called when the timer will be finished.
+  - The next timer which should be launched after this one.
+*/
+typedef struct info_timer info_timer;
+struct info_timer
+{
+  Uint32 time_called;
+  Uint32 initial_delay;
+  Uint32 effective_delay;
+  void *function;
+  info_timer *next_timer;
+};
+
+//Function called when a SIGALRM is received.
+
+
 // Return number of elapsed µsec since... a long time ago
 static unsigned long get_time (void)
 {
@@ -26,33 +44,80 @@ static unsigned long get_time (void)
 
 #ifdef PADAWAN
 
-typedef struct Liste Liste;
-struct Liste
-{
-  unsigned long depart;
-  Uint32 delai_restant;
-  void *param;
-  struct Liste *suivant;
-};
 
-Liste *encours=NULL;
 
-void c(int s){
-  sdl_push_event(parameter);
-  printf ("sdl_push_event(%p) appelée au temps %ld\n", parameter, get_time ());
-  if(encours!=NULL){
-    encours=encours->suivant;
-    if(encours != NULL){
-      //parameter=encours->param;
-      if(encours->delai_restant < 1000){
-        sdl_push_event(encours->param);
-        encours=encours->suivant;
-      }
-      printf("encours : %d\n",encours );
-      if(encours != NULL)
-        timer_set(encours->delai_restant,encours->param);
-      printf("TEST4\n");
+info_timer *current_timer=NULL;
+
+void timer_launcher(){
+  struct itimerval timer;
+  timer.it_interval.tv_sec = 0;
+  timer.it_interval.tv_usec = 0;
+  timer.it_value.tv_sec = current_timer->effective_delay/1000;
+  timer.it_value.tv_usec = (current_timer->effective_delay%1000)*1000;
+  setitimer(ITIMER_REAL,&timer,NULL);
+}
+
+
+void add_timer(info_timer *placed, info_timer *to_place, Uint32 current_time){
+
+  Uint32 placed_time_left = (placed->time_called + placed->effective_delay) - current_time;
+  Uint32 placed_end = placed->time_called + placed->effective_delay;
+  
+  //Uint32 to_place_time_left = (to_place->time_called + to_place->effective_delay) - current_time;
+  Uint32 to_place_end = to_place->time_called + to_place->effective_delay;
+  
+
+  if( placed_end < to_place_end){
+    to_place->time_called = placed_end;
+    to_place->effective_delay -= placed_time_left;
+    if(placed->next_timer == NULL){
+      placed->next_timer = to_place;
     }
+    else{
+      add_timer(placed->next_timer,to_place,current_time);
+    }
+  }
+  else{
+
+    if(placed == current_timer){
+      placed->time_called = to_place_end;
+      placed->effective_delay -= (current_time - placed->time_called) + to_place->effective_delay;
+      to_place->next_timer = placed;
+      current_timer = to_place;
+      timer_launcher();
+    }
+    else{
+      info_timer *previous = current_timer;
+      while(previous->next_timer != placed){
+        previous = previous->next_timer;
+      }
+      placed->effective_delay -= to_place->effective_delay;
+      placed->time_called += to_place->effective_delay;
+      to_place->next_timer = placed;
+      previous->next_timer = to_place;
+    }
+  }
+}
+
+  
+
+
+void signal_treatment(){
+  if(current_timer!=NULL){
+    
+    info_timer *backup = current_timer;
+    void* function = current_timer->function;
+    current_timer=current_timer->next_timer;
+    if(current_timer != NULL){
+      timer_launcher();
+    }
+
+
+    sdl_push_event(function);
+    
+    printf ("sdl_push_event(%p) appelée au temps : %d ms.\n", function,time);
+
+    free(backup);
   }
 }
 
@@ -74,10 +139,11 @@ int timer_init (void)
   sigfillset(&m);
   pthread_sigmask(SIG_SETMASK,&m,NULL);
   struct sigaction s;
-  s.sa_handler = c;
+  s.sa_handler = signal_treatment;
   sigemptyset(&s.sa_mask);
   s.sa_flags=0;
   sigaction(SIGALRM,&s,NULL);
+
   pthread_create(&tid,NULL,routine,&m);
   return 1; // Implementation not ready
 }
@@ -85,91 +151,35 @@ int timer_init (void)
 
 timer_id_t timer_set (Uint32 delay, void *param)
 {
-  //parameter=param;
-  unsigned long current_time=get_time();
+  printf("APPEL DE TIMER_SET et current_timer = %d\n",current_timer);
+  //Time in ms.
+  Uint32 current_time=get_time()/1000;
 
-  Liste *delais = malloc(sizeof(Liste));
-  if(delais==NULL){
-    exit_with_error("erreur creation delais");
+  info_timer *new_timer = malloc(sizeof(info_timer));
+  if(new_timer == NULL){
+    exit_with_error("Error access memory (creation new info_timer)");
   }
   else{
-    delais->depart=current_time;
-    delais->delai_restant = delay;
-    delais->param=param;
-    delais->suivant=NULL;
+    new_timer->time_called = current_time;
+    new_timer->initial_delay = delay;
+    new_timer->effective_delay = delay;
+    new_timer->function = param;
+    new_timer->next_timer = NULL;
   }
 
-//FONCTIONNE BIEN
-  if(encours==NULL){
-    encours=delais;
-    parameter=encours->param;
-    struct itimerval timer;
-    timer.it_interval.tv_sec=0;
-    timer.it_interval.tv_usec=0;
-    timer.it_value.tv_sec=encours->delai_restant/1000;
-    timer.it_value.tv_usec=((encours->delai_restant)%1000)*1000;
-    setitimer(ITIMER_REAL,&timer,NULL);
-  }
+//If no timer is running.
+//OK
 
-//Le cas où un timer est déjà en cours.
+  if(current_timer == NULL){
+    current_timer = new_timer;
+
+    timer_launcher();
+  }
+//If a timer is already running.
   else{
-    Liste *tmp=encours;
-    unsigned long d;
-    /*if(tmp->depart+(tmp->delai_restant*1000)<current_time){
-      exit_with_error("MERDE\n");
-    }
-    else{*/
-      d=(tmp->depart+(tmp->delai_restant*1000))-current_time; //usec
-      printf("tmp->depart : %lu\n",tmp->depart);
-      printf("tmp->delai_restant : %d\n",tmp->delai_restant*1000);
-      printf("current_time : %lu\n",current_time);
-    //}
-    printf("d : %lu\n",d);
-
-
-//Le cas où le prochain processus doit finir après le processus en cours
-    if(d<(delais->delai_restant*1000)){ //usec
-      delais->delai_restant-=d/1000;
-      while(tmp->suivant!=NULL && delais->delai_restant>tmp->suivant->delai_restant){
-        tmp=tmp->suivant;
-        delais->delai_restant-=tmp->delai_restant;
-      }
-      if(tmp->suivant !=NULL){
-        tmp->suivant->delai_restant-=delais->delai_restant;
-        delais->suivant=tmp->suivant;
-        tmp->suivant=delais;
-        encours=tmp;
-
-        struct itimerval timer;
-        timer.it_interval.tv_sec=0;
-        timer.it_interval.tv_usec=0;
-        timer.it_value.tv_sec=encours->delai_restant/1000;
-        timer.it_value.tv_usec=((encours->delai_restant)%1000)*1000;
-        setitimer(ITIMER_REAL,&timer,NULL);
-      }
-    }
-//Le cas où le prochain processus doit finir avant celui en cours
-    else{
-      d = current_time - tmp->depart;
-      tmp->delai_restant -= d/1000;
-      tmp->delai_restant -= delais->delai_restant; 
-
-      
-      delais->suivant=tmp;
-      delais->suivant->delai_restant = tmp->delai_restant;
-      encours=delais;
-
-
-      struct itimerval timer;
-      timer.it_interval.tv_sec=0;
-      timer.it_interval.tv_usec=0;
-      timer.it_value.tv_sec=encours->delai_restant/1000;
-      timer.it_value.tv_usec=((encours->delai_restant)%1000)*1000;
-      setitimer(ITIMER_REAL,&timer,NULL);
-    }
-
+    add_timer(current_timer,new_timer,current_time);
   }
-  //free(delais);
+ 
   return (timer_id_t) NULL;
 }
 
