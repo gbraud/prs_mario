@@ -68,11 +68,8 @@ La sauvegarde et le chargement sont désormais fonctionnels :
 \end{itemize}
 
 
-	\subsection{Difficultés rencontrées}%
-	
-	\begin{itemize}
-	\item SAVE : Propriété get solidity en binaire \\
-	\end{itemize}
+	\subsection{Difficultés rencontrées}
+	Pour le \texttt{map$\_$save}, nous avons rencontré une difficulté pour la sauvegarde des propriétés. Nous voulions sauvegarder chaque propriété dans un int, mais cela posait problème lors du load. Nous avons corrigé le problème en créant une seule variable contenant toutes les propriétés puisque chacune correspond à une puissance de 2 différente.
 	
 	La principale difficulté rencontrée pour le \texttt{map$\_$load} était de récupérer le nom des objets (pour afficher l'image) ; nous avions pensé à utiliser un \texttt{malloc} pour initialiser le tableau contenant les caractères du nom, mais le tableau de caractère ne se remplissait pas correctement. La solution était d'utiliser un \texttt{calloc} pour bien initialiser les éléments du tableau à 0. 
 	
@@ -159,7 +156,7 @@ Nous avons remarqué après le rendu qu'il y avait une erreur dans le setObjects
 	Pour cela, nous devions compléter les fonctions :
 \begin{itemize}
 	 \item \texttt{timer$\_$init}, qui permet l'initialisation des variables et la mise en place des traitants de signaux;
-	 \item \texttt{timer$\_$set}, qui permet \textit{d'armer} un temporisateur, grâce au paramètre \texttt{delay} qui spécifie la durée avant qu'un événement ne se déclenche; \\
+	 \item \texttt{timer$\_$set}, qui permet \textit{d'armer} un temporisateur, grâce au paramètre \texttt{delay} qui spécifie la durée avant qu'un événement ne se déclenche; 
 	 \item \textbf{Bonus} : \texttt{timer$\_$cancel}, qui permet d'annuler un temporisateur précédemment armé avec \texttt{timer$\_$set}. \\
 \end{itemize}
 
@@ -170,17 +167,16 @@ Nous avons remarqué après le rendu qu'il y avait une erreur dans le setObjects
 	.2 map$\_$save.
 	.2 map$\_$load.
 	.1 rapport PDF.
+	.1 grille.txt.
 	}
 	
 
 	\subsection{Travail réalisé et résultats obtenus} 
-	Tout d'abord, nous avons considéré qu'un seul évènement était déclenché à la fois.
+	Tout d'abord, nous avons considéré le déclenchement d'un seul évènement.
 	
-	Nous avons commencé par implémenter \texttt{timer$\_$init} qui crée un thread et une sigaction.
+	Nous avons implémenté \texttt{timer$\_$init} qui crée un thread et une sigaction(qui lance le traitant à la réception du signal SIGALRM seulement).
 	
-	La sigaction lance le traitant à la réception du signal SIGALRM seulement.
-	
-	Afin que le thread soit le seul à recevoir le signal SIGALRM, nous avons masqué tous les signaux grâce à un \texttt{sigfillset} dans cette fonction \texttt{timer$\_$init}, puis nous avons démasqué SIGALRM grâce à \texttt{sigdelset} dans la routine du thread (fonction \texttt{void * routine}) lancée en continu à la création de celui-ci avec \texttt{pthread$\_$create}. Cette routine effectue une boucle infinie attendant la réception d'un SIGALRM avec la fonction \texttt{sigsuspend}. 
+	Afin que seul le thread reçoive le signal SIGALRM, nous avons masqué tous les signaux grâce à un \texttt{sigfillset} dans cette fonction \texttt{timer$\_$init}, puis nous avons démasqué SIGALRM grâce à \texttt{sigdelset} dans la routine du thread (fonction \texttt{void * routine}) lancée en continu à la création de celui-ci avec \texttt{pthread$\_$create}. Cette routine effectue une boucle infinie attendant la réception d'un SIGALRM avec la fonction \texttt{sigsuspend}. 
 	
 	Nous avons ensuite pu créer un timer dans \texttt{timer$\_$set} qui déclenche un SIGALRM au bout d'un certain temps (delay spécifié dans les paramètres de la fonction).
 	Afin de sauvegarder le paramètre param de la fonction, nous avons créé une variable globale \texttt{function} pour que le traitant de la sigaction y ait accès.
