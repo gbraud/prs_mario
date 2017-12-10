@@ -25,7 +25,7 @@
 \newpage
 \section{Rendu intermédiaire n°1 \texttt{(17 novembre)}} 
 	\subsection{Objectifs à atteindre}
-	L'objectif du premier rendu était de se familiariser avec le jeu (commandes de base, édition de la carte..), puis d'include deux nouveaux objets (\textit{flower} et \textit{coin}) et leurs propriétés. \\ 
+	L'objectif du premier rendu était de se familiariser avec le jeu (commandes de base, édition de la carte..), puis d'inclure deux nouveaux objets (\textit{flower} et \textit{coin}) et leurs propriétés. \\ 
 	Ensuite nous devions implémenter la sauvegarde et le chargement des cartes, en développant les fonctions \texttt{map$\_$save} et \texttt{map$\_$load}.\\
 	
 	Fichier à rendre :
@@ -38,8 +38,8 @@
 	
 	\subsection{Travail réalisé et résultats obtenus}
 	
-	Pour include les deux nouveaux objets, nous avons ajouter 2 au nombre d'objets total (précédemment 6) : \texttt{map$\_$objet$\_$begin(8)}, puis nous avons appeler un \texttt{map$\_$object$\_$add} pour chaque objet, en spécifiant en paramètre l'image \texttt{.png}, le nombre de sprites et les propriétés. \\
-Les deux objets peuvent désormais être sélectionné et affiché dans le jeu. \\
+	Pour inclure les deux nouveaux objets, nous avons ajouter 2 au nombre d'objets total (précédemment 6) : \texttt{map$\_$objet$\_$begin(8)}, puis nous avons appeler un \texttt{map$\_$object$\_$add} pour chaque objet, en spécifiant en paramètre l'image \texttt{.png}, le nombre de sprites et les propriétés. \\
+Les deux objets peuvent désormais être sélectionnés et affichés dans le jeu. \\
 
 Pour implémenter la sauvegarde d'une carte, nous avons compléter la fonction \texttt{map$\_$save}.
 Pour ce faire, nous ouvrons un fichier vide \texttt{save} avec la fonction \texttt{open} puis nous stockons chaque caractéristiques de la carte dans des variables grâce aux fonctions fournies :
@@ -58,7 +58,7 @@ Ensuite, nous utilisons les fonctions fournies pour créer la carte : \\
 \texttt{map$\_$allocate(width,height)} et \texttt{map$\_$object$\_$begin(nb$\_$objets)}\\
 De la même manière que le \texttt{map$\_$save}, nous stockons les caractéristiques des objets dans des variables en les parcourant un par un, et à chaque fin de boucle on appelle \texttt{map$\_$object$\_$add(nom, frame, prop)}. \\
 Une fois tous les objets ajoutés, on termine par \texttt{map$\_$object$\_$end()}. \\
-Enfin, le contenu de chaque case est stocké en parcourant la hauteur (\texttt{i de 0 à height}) et la largeur (\texttt{i de 0 à width}) de la carte, et à chaque case on appelle \texttt{map$\_$set(j,i,contenu)}. \\
+Enfin, le contenu de chaque case est stocké en parcourant la hauteur (\texttt{i de 0 à height}) et la largeur (\texttt{i de 0 à width}) de la carte, et à chaque case on appelle \texttt{map$\_$set(j,i,contenu)} (nous avons choisi de sauver le contenu ligne par ligne, d'où l'inversion dans la boucle). \\
 
 La sauvegarde et le chargement sont désormais fonctionnels :
 \begin{itemize}
@@ -117,7 +117,7 @@ La sauvegarde et le chargement sont désormais fonctionnels :
  	$ 
 
 \end{center}
-
+Nous avons pensé plus tard à ajouter dans le getObjects le nom et les propriétés des différents objets en plus du nombre d'objets de la carte. Nous avons simplement rajouté une boucle de taille \texttt{nombre d'objets} lisant et affichant pour chaque objet son nom (boucle d'affichage de chaque caractère de taille définie par le premier int qui correspond à la taille du nom), le nombre de frames et ses différentes propriétés (on récupère le int prop et chaque puissance de 2 nous donne une propriété, par exemple la 8ème nous donne 1 s'il est générateur, et nous affichons "générateur" etc.).\\
 Pour réaliser le reste des fonctions de \texttt{maputil}, nous avons fait le choix de ré-écrire entièrement une nouvelle carte (\texttt{new.map}) avec les attributs à changer (\texttt{width, height}, objets à remplacer ou suppression des objets inutilisés) et de remplacer l'ancienne carte par la nouvelle, définie de la manière suivante : 
 
 	 Pour \texttt{setWidth} et \texttt{setHeight}, on récupère chaque caractéristique de la	carte avec un \texttt{read}, et on les place dans la nouvelle carte avec un \texttt{write} avec le nouvel attribut (\texttt{width} ou \texttt{height}). La boucle implémentant le contenu de chaque cases va également s'adapter avec le nouvel attribut, en supprimant le contenu des cases si il diminue, ou en ajoutant des cases vides si il augmente. \\
@@ -149,6 +149,8 @@ L'utilitaire de manipulation de carte \texttt{maputil} est désormais fonctionne
 	\subsection{Difficultés rencontrées}
 		
 La principale difficulté rencontrée pour réaliser \texttt{maputil} était de savoir quelle méthode utiliser pour modifier les propriétés de la carte et des objets. Nous avons opté pour une redéfinition entière d'une nouvelle carte, car nous pouvons modifier toutes les propriétés à la création. Il nous suffisait ensuite de remplacer l'ancienne carte par la nouvelle. 
+
+Nous avons remarqué après le rendu qu'il y avait une erreur dans le setObjects. En effet, dans l'écriture des propriétés, en l'occurence collectible (ainsi que destructible et generator), nous avons mis MAP$\_$OBJECT$\_$COLLECTIBLE (qui vaut 128) au lieu de 1,  donc l'écriture des propriétés était erronée. Nous avons changé ces trois propriétés, actuellement le setObjects est entièrement fonctionnel.
 	
 \newpage
 \section{Rendu final \texttt{(10 décembre)}}
@@ -171,11 +173,39 @@ La principale difficulté rencontrée pour réaliser \texttt{maputil} était de 
 	}
 	
 
-	\subsection{Travail réalisé et résultats obtenus}
+	\subsection{Travail réalisé et résultats obtenus} 
+	Tout d'abord, nous avons considéré qu'un seul évènement était déclenché à la fois.
 	
+	Nous avons commencé par implémenter \texttt{timer$\_$init} qui crée un thread et une sigaction.
 	
+	La sigaction lance le traitant à la réception du signal SIGALRM seulement.
+	
+	Afin que le thread soit le seul à recevoir le signal SIGALRM, nous avons masqué tous les signaux grâce à un \texttt{sigfillset} dans cette fonction \texttt{timer$\_$init}, puis nous avons démasqué SIGALRM grâce à \texttt{sigdelset} dans la routine du thread (fonction \texttt{void * routine}) lancée en continu à la création de celui-ci avec \texttt{pthread$\_$create}. Cette routine effectue une boucle infinie attendant la réception d'un SIGALRM avec la fonction \texttt{sigsuspend}. 
+	
+	Nous avons ensuite pu créer un timer dans \texttt{timer$\_$set} qui déclenche un SIGALRM au bout d'un certain temps (delay spécifié dans les paramètres de la fonction).
+	Afin de sauvegarder le paramètre param de la fonction, nous avons créé une variable globale \texttt{function} pour que le traitant de la sigaction y ait accès.
+	
+	Le traitant de signal n'a plus qu'à déclencher l'évènement correspondant au paramètre (param) sauvé dans function, grâce à la fonction \texttt{sdl$\_$push$\_$event}. \\
+	\\
+	Cette implémentation nous a permis de gérer un évènement, mais gérait seulement le dernier évènement si nous en lancions plusieurs sans attendre leurs fins, puisque chaque nouvel évènement écrasait le \texttt{delay} et \texttt{param} du précédent.
+	
+	Une solution possible est de stocker dans une liste les différents évènements. Nous avons décidé d'y stocker l'\texttt{heure d'appel} de l'évènement, son \texttt{délai initial}, son \texttt{délai effectif} (délai restant à un temps t) et son \texttt{paramètre} (pour l'appel à la fonction sdl$\_$push$\_$event). L'heure d'appel nous permet de calculer le délai restant à un temps ultérieur. Ainsi, lors de la demande d'un nouvel évènement, deux cas de figure se présentent.
+	
+	Soit il n'y a aucun évènement en cours, dans quel cas nous ajoutons le nouveau en tête de liste et lançons le timer (nous l'avons mis dans une fonction \texttt{timer$\_$launcher} pour plus de clarté).
+		
+	Si un ou plusieurs évènements sont en cours, nous pouvons comparer le délai restant de l'évènement lancé avec ceux des différents éléments en cours, et placer celui-ci dans la liste (grâce à la fonction \texttt{add$\_$timer}), triée dans l'ordre croissant des délais effectifs.
+	
+	Le rôle du traitant est alors de lancer la fonction \texttt{sdl$\_$push$\_$event} sur le premier élément de la liste, dont le délai effectif est le plus court. Nous pouvons alors supprimer l'élément. Si la liste n'est pas vide, alors le prochain timer est lancé et ainsi de suite jusqu'à ce que la liste soit vide.
+	Ainsi, chaque évènement devrait être traité séparément.
 	
 	\subsection{Difficultés rencontrées}
-
+	Nous avons eu des difficultés à organiser nos fonctions.
+	Nous avons pensé au départ traiter les différents problèmes dans le \texttt{timer$\_$set}. Nous avons découpé le cas ou la liste n'était pas vide en 2 sous-cas, l'un lorsque l'évènement actuel avait un délai inférieur aux éléments de la liste, l'autre quand il était supérieur. Nous nous sommes rendus compte que nous obtenions une implémentation qui ne comparait que deux évènements, c'est pourquoi nous avons pensé à un \texttt{add$\_$timer}.
+	
+	De plus, cette implémentation n'était pas claire donc nous avons découpé le code avec d'autres fonctions (\texttt{timer$\_$launcher}, \texttt{add$\_$timer}).
+	
+	Nous avons un problème avec les délais. Nous avons essayé de la corriger avec des \texttt{printf} des différents délais à chaque nouvel appel de fonction. Nous avons remarqué que les délais deviennent rapidement très élevé. Il peut s'agir d'un problème de conversion entre les différents temps qui sont pour certains en microsecondes et pour d'autres en millisecondes, ou bien d'un problème de placement dans la liste, mais à ce jour nous n'avons pas réussi à corriger le problème.
+	
+	Nous n'avons pas eu le temps de nous pencher sur le \texttt{timer$\_$cancel}.
 
 \end{document}
